@@ -76,9 +76,9 @@ then
 fi
 
 # command to compile the source the remote build host
-# rebar | mix
+# rebar | mix | erlang.mk
 if [ -z "$BUILD_CMD" ]; then
-  [[ -f "./mix.exs" ]] && BUILD_CMD=${BUILD_CMD:=mix} || BUILD_CMD=${BUILD_CMD:=rebar}
+  [[ -f "./mix.exs" ]] && BUILD_CMD=${BUILD_CMD:=mix} || [[ -f "./erlang.mk" ]] && BUILD_CMD=${BUILD_CMD:=make} || BUILD_CMD=${BUILD_CMD:=rebar}
 fi
 
 # command to generate the release on the remote build host
