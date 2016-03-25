@@ -22,6 +22,7 @@ fi
 
 REBAR_CMD=${REBAR_CMD:="./rebar $REBAR_OPTIONS"}
 MIX_CMD=${MIX_CMD:="mix"}
+ERLANGMK_CMD=${ERLANGMK_CMD:="make"}
 RELX_CMD=${RELX_CMD:="./relx"}
 
 # sets the build host, user and path as deliver hosts and path
@@ -106,6 +107,9 @@ erlang_get_and_update_deps() {
     if [ \"$BUILD_CMD\" = \"rebar\" ]; then
       echo \"using rebar to fetch and update deps\"
       $REBAR_CMD update-deps get-deps
+    elif [ \"$BUILD_CMD\" = \"make\" ]; then
+      echo \"using erlang.mk to fetch and update deps\"
+      $ERLANGMK_CMD deps
     elif [ \"$BUILD_CMD\" = \"mix\" ]; then
       echo \"using mix to fetch and update deps\"
       if [ ! -f ~/.mix/rebar ]; then
@@ -135,7 +139,9 @@ erlang_clean_compile() {
       echo \"using rebar to compile files\"
       [[ \"$SKIP_MIX_CLEAN\" != \"true\" ]] && $REBAR_CMD clean skip_deps=true || :
       $REBAR_CMD compile
-
+    elif [ \"$BUILD_CMD\" = \"make\" ]; then
+      echo \"using erlang.mk to compile files\"      
+      $ERLANGMK_CMD clean & $ERLANGMK_CMD app
     elif [ \"$BUILD_CMD\" = \"mix\" ] && [ \"$RELEASE_CMD\" = \"mix\" ]; then
       [[ \"$SKIP_MIX_CLEAN\" = \"true\" ]] && APP=\"$APP\" MIX_ENV=\"$TARGET_MIX_ENV\" $MIX_CMD compile || APP=\"$APP\" MIX_ENV=\"$TARGET_MIX_ENV\" $MIX_CMD do clean, compile
     elif [ \"$BUILD_CMD\" = \"mix\" ]; then
@@ -178,6 +184,9 @@ erlang_generate_release() {
     if [ \"$RELEASE_CMD\" = \"rebar\" ]; then
       echo \"using rebar to generate release\"
       $REBAR_CMD $RELEASE_CMD_OPTIONS -f generate
+    elif [ \"$RELEASE_CMD\" = \"make\" ]; then
+      echo \"using erlang.mk to generate release\"
+      $ERLANGMK_CMD rel
     elif [ \"$RELEASE_CMD\" = \"relx\" ]; then
       echo \"using relx to generate release\"
       $RELX_CMD release
@@ -223,6 +232,8 @@ erlang_archive_release() {
     set -e
     cd $DELIVER_TO
     if [ \"$RELEASE_CMD\" = \"rebar\" ]; then
+      tar -zcpf $(dirname $RELEASE_DIR)/${APP}_${RELEASE_VERSION}.tar.gz -C $(dirname $RELEASE_DIR) ${APP}
+    elif [ \"$RELEASE_CMD\" = \"make\" ]; then
       tar -zcpf $(dirname $RELEASE_DIR)/${APP}_${RELEASE_VERSION}.tar.gz -C $(dirname $RELEASE_DIR) ${APP}
     elif [ \"$RELEASE_CMD\" = \"relx\" ]; then
       echo \"using relx to archive release\"
